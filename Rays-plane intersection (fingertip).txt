@@ -1,0 +1,113 @@
+#Import the libraries
+from sympy import *
+from sympy.vector import CoordSys3D
+
+#The origin of the system
+Sys = CoordSys3D('Sys')
+O = Sys.origin
+
+#======================
+# Define position point
+#======================
+
+## Objects
+### Blue light source
+b1, b2, b3 = symbols('x_lb y_lb z_lb')
+B = O.locate_new('B', b1*Sys.i + b2*Sys.j + b3*Sys.k)
+### Red light source
+r1, r2, r3 = symbols('x_lr y_lr z_lr')
+R = O.locate_new('R', r1*Sys.i + r2*Sys.j + r3*Sys.k)
+### Point-like object
+p1, p2, p3 = symbols('x_op y_op z_op')
+P = O.locate_new('P', p1*Sys.i + p2*Sys.j + p3*Sys.k)
+
+## Camera focal point
+f1, f2, f3 = symbols('x_cl y_cl z_cl')
+focalpt = O.locate_new('focalpt', f1*Sys.i + f2*Sys.j + f3*Sys.k)
+
+## Three non-colinear points (represent the plane corners)
+### Screen plane (z coordinate always zero)
+#### Alpha
+alpha1, alpha2 = symbols(r'x_\alpha y_\alpha')
+Alpha = O.locate_new('Alpha', alpha1*Sys.i + alpha2*Sys.j + 0*Sys.k)
+#### Beta
+beta1, beta2 = symbols(r'x_\beta y_\beta')
+Beta = O.locate_new('Beta', beta1*Sys.i + beta2*Sys.j + 0*Sys.k)
+#### Gamma
+gamma1, gamma2 = symbols(r'x_\gamma y_\gamma')
+Gamma = O.locate_new('Gamma', gamma1*Sys.i + gamma2*Sys.j + 0*Sys.k)
+
+### Sensor plane
+Z = symbols('z_p') # The distance from the screen plane to sensor plane
+#### Delta
+delta1, delta2 = symbols(r'x_\delta y_\delta')
+Delta = O.locate_new('Delta', delta1*Sys.i + delta2*Sys.j + Z*Sys.k)
+#### Epsilon
+epsilon1, epsilon2 = symbols(r'x_\epsilon y_\epsilon')
+Epsilon = O.locate_new('Epsilon', epsilon1*Sys.i + epsilon2*Sys.j + Z*Sys.k)
+#### Zeta
+zeta1, zeta2 = symbols(r'x_\zeta y_\zeta')
+Zeta = O.locate_new('Zeta', zeta1*Sys.i + zeta2*Sys.j + Z*Sys.k)
+
+#============================================
+# Define position vector (relative to origin)
+#============================================
+# X.position_wrt(Y): The position of X with relative to Y
+
+## Objects
+### Blue light source
+oB = B.position_wrt(O)
+### Red light source
+oR = R.position_wrt(O)
+### Point-like object
+oP = P.position_wrt(O)
+
+## Camera focal point
+ofocalpt = focalpt.position_wrt(O)
+
+## Three non-colinear points
+### Screen plane
+oAlpha = Alpha.position_wrt(O)
+oBeta = Beta.position_wrt(O)
+oGamma = Gamma.position_wrt(O)
+### Sensor plane
+oDelta = Delta.position_wrt(O)
+oEpsilon = Epsilon.position_wrt(O)
+oZeta = Zeta.position_wrt(O)
+
+#==============================
+# Normal vectors of the planes
+#==============================
+
+## Screen plane
+N1 = (oAlpha-oBeta).cross(oGamma-oBeta)
+## Sensor plane
+N2 = (oDelta-oEpsilon).cross(oZeta-oEpsilon)
+
+#====================================
+# Intersection vectors on the planes
+#====================================
+
+## Shadows on the screen plane
+### Blue shadow
+Sb = oB + (N1.dot(oB-oBeta)/N1.dot(oB-oP))*(oP-oB)
+### Red shadow
+Sr = oR + (N1.dot(oR-oBeta)/N1.dot(oR-oP))*(oP-oR)
+
+## Images on the sensor plane
+### Blue image
+Ib = Sb + (N2.dot(Sb-oEpsilon)/N2.dot(Sb-ofocalpt))*(ofocalpt-Sb)
+### Red Image
+Ir = Sr + (N2.dot(Sr-oEpsilon)/N2.dot(Sr-ofocalpt))*(ofocalpt-Sr)
+
+#===============================
+# Convert vector in matrix form
+#===============================
+
+## Shadows
+Sbmat = Sb.to_matrix(Sys)
+Srmat = Sr.to_matrix(Sys)
+
+## Images
+Ibmat = Ib.to_matrix(Sys)
+Irmat = Ir.to_matrix(Sys)
